@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+  .axis {
+    font: 10px sans-serif;
+  }
+
+  .area {
+      fill: lightsteelblue;
+      stroke-width: 0;
+      opacity: 0.5;
+  }
+  .bar rect {
+    fill: steelblue;
+    shape-rendering: crispEdges;
+  }
+
+  .bar text {
+    fill: #fff;
+  }
+
+  .percents {
+    fill: none;
+    stroke: rgb(157, 21, 21);
+    stroke-opacity: 0.5;
+    stroke-width: 1.5px;
+  }
+
+  .bar {
+    fill: steelblue;
+  }
+
+  .bar:hover {
+    fill: brown;
+  }
+
+  .axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+  #chart {
+    height: 600px;
+  }
+
+</style>
+<body>
+
+  <div id="chart"></div>
+
+  <!-- load the d3.js library -->    
+  <script src="http://d3js.org/d3.v4.min.js"></script>
+
+  <script>
+    // sample json data
+    var data = [{"city":"Caponga","days":8,"cost":2319,"name":"Gurgel"},{"city":"Caucaia","days":3,"cost":4805,"name":"Leila"},{"city":"Belém","days":4,"cost":1778,"name":"Mike"},{"city":"Rio de Janeiro","days":3,"cost":7620,"name":"Samuel"},{"city":"Cuiabá","days":9,"cost":1872,"name":"Harley"},{"city":"São Benedito","days":7,"cost":8563,"name":"Gustavo"},{"city":"Salvador","days":10,"cost":2964,"name":"Raquel"},{"city":"Taiba","days":1,"cost":9651,"name":"Pedro"},{"city":"Tianguá","days":4,"cost":6967,"name":"Felipe"},{"city":"Fortaleza","days":2,"cost":5014,"name":"José"},{"city":"Curitiba","days":5,"cost":5793,"name":"Maria"}];
+
+    var parseCurrency = function(d) { return "R$" + d3.format(",.2f")(d); };
+
+    // Set the dimensions of the canvas
+    var margin = {top: 30, right: 20, bottom: 30, left: 100},
+      width = 600 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+    // Set the ranges
+    var x = d3.scaleBand()
+      .rangeRound([0, width])
+      .padding(0.5);
+
+    var y = d3.scaleLinear()
+      .range([height, 0]);
+
+    // Define the axes
+    var xAxis = d3.axisBottom(x);
+
+    var yAxis = d3.axisLeft(y)
+    yAxis.tickSizeInner(-width)
+    yAxis.tickSizeOuter(5)
+    yAxis.tickPadding(10);
+
+    yAxis.tickFormat(function (d) {
+      return parseCurrency(d);
+    });
+
+    // Adds the svg canvas
+    var svg = d3.select("#chart")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom + 100)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Scale the range of the data
+    x.domain(data.sort(function(a, b) {return (b.cost - a.cost);}).map(function(d) { return d.name;})); 
+    y.domain([0,d3.max(data, function(d) {return d.cost})]);
+
+    // Add the value to x
+    svg.append('g')
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis)
+    .selectAll("text")
+    .style("text-anchor", "end")
+    .attr("dx", "-.8em")
+    .attr("dy", ".15em")
+    .attr("transform", function(d) { return "rotate(-70)" });
+
+    // Add the value to y
+    svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+    // Add bars
+    var bar = svg.selectAll("bar") 
+      .data(data)
+      .enter()
+      .append("g");
+
+    bar.append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.name) })
+      .attr("width", 20)
+      .attr("y", function(d) { return y(d.cost) })
+      .attr("height", function(d) { return height - y(d.cost) });
+
+    // Add line
+    var dataSum = d3.sum(data, function(d) { return d.cost });
+    var maxValue = d3.max(data, function(d) { return d.cost });
+    var percents = [];
+    var acc = 0
+
+    data.forEach(function(d) {
+      var p = d.cost/dataSum;
+      percents.push(p + acc);
+      acc += p;
+    });
+
+    var percent = d3.line()
+      .x(function(d) { return x(d.name) })
+      .y(function(d, i) {
+        if(i == 0)
+          return y(0);
+        else
+          return y(percents[i]*maxValue);
+      });
+
+    svg.append("path")
+      .datum(data)
+      .attr("class", "percents")
+      .attr("d", percent);
+
+    svg.append('g')
+      .selectAll('text')
+      .data(data)
+      .enter()
+      .append('text')
+      .text(function(d, i) { return (percents[i]*100).toFixed(2) + "%" })
+      .attr("x", function(d) { return x(d.name) + 5 })
+      .attr("y", function(d, i) {
+        if(i == 0)
+          return y(0);
+        else
+          return y(percents[i]*maxValue);
+      })
+      .style("fill","rgb(157, 21, 21)")
+      .style("font-size", "10px");
+         
+
+  </script>
+</body>
