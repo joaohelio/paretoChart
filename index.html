@@ -69,9 +69,8 @@
     // Define the axes
     var xAxis = d3.axisBottom(x);
 
-    var yAxis = d3.axisLeft(y)
-    yAxis.tickSizeInner(-width)
-    yAxis.tickSizeOuter(5)
+    var yAxis = d3.axisLeft(y);
+    yAxis.tickSizeInner(-width);
     yAxis.tickPadding(10);
 
     yAxis.tickFormat(function (d) {
@@ -123,7 +122,7 @@
     var dataSum = d3.sum(data, function(d) { return d.cost });
     var maxValue = d3.max(data, function(d) { return d.cost });
     var percents = [];
-    var acc = 0
+    var acc = 0;
 
     data.forEach(function(d) {
       var p = d.cost/dataSum;
